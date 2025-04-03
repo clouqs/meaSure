@@ -66,7 +66,7 @@ class HandTrackingDynamic:
 
         return self.lmsList, bbox
     
-    def findFingerUp(self):
+    def findFingerUp(self):    # add thumb detection when flipped hands (useless when making the meaSure proj.)
         fingers = []
         if not self.results or not self.results.multi_hand_landmarks:
             return fingers
