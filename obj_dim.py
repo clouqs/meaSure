@@ -1,5 +1,5 @@
 import cv2
-import mediapipe as mp
+import mediapipe as mp # type: ignore
 import time
 import math
 
@@ -46,29 +46,28 @@ class HandScaleMeasurement:
 
         cm_per_pixel = self.ref_length_cm / self.ref_length_px
 
-        # Measure object in right hand
+
         right_landmarks = [(int(lm.x * w), int(lm.y * h)) for lm in right_hand.landmark]
         x_coords, y_coords = zip(*right_landmarks)
         
         xmin, xmax = min(x_coords), max(x_coords)
         ymin, ymax = min(y_coords), max(y_coords)
 
-        # Calculate dimensions
+        
         width_px = xmax - xmin
-        height_px = ymax - ymin
+        height_px = ymax - ymin  #+ 1.2 fix later
         width_cm = width_px * cm_per_pixel
         height_cm = height_px * cm_per_pixel
 
-        # Visualization
-        cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
-        cv2.putText(frame, f'{width_cm:.1f}x{height_cm:.1f} cm', 
-                   (xmin, ymin-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
         
-        # Draw reference line
+        
+        #cv2.putText(flipped, f'{width_cm:.1f}x{height_cm:.1f} cm', 
+                   #(xmin, ymin-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
+        cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
         left_tip = (int(left_hand.landmark[12].x * w), int(left_hand.landmark[12].y * h))
         left_wrist = (int(left_hand.landmark[0].x * w), int(left_hand.landmark[0].y * h))
         cv2.line(frame, left_tip, left_wrist, (0, 0, 255), 2)
-        cv2.putText(frame, f'Reference: {self.ref_length_cm}cm', 
-                   (left_wrist[0]-50, left_wrist[1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+        #cv2.putText(frame, f'Reference: {self.ref_length_cm}cm', 
+                   #(left_wrist[0]-50, left_wrist[1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
 
         return frame, width_cm, height_cm
