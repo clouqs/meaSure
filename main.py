@@ -35,7 +35,7 @@ def main():
         lmsList, bbox = detector.findPosition(frame)
         totalFingers = detector.fingerCount(frame)
         
-        #frame, width, height = measurement.measure_object(frame)
+        frame, width, height = measurement.measure_object(frame)
 
         # Display info
         ctime = time.time()
