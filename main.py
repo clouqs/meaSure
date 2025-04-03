@@ -26,16 +26,16 @@ def main():
         if not ret:
             print("Failed to capture image")
             break
+        
 
-        # Flip the frame to create a mirror image
+        #frame flip
         frame = cv2.flip(frame, 1)
 
         frame = detector.findFingers(frame)
         lmsList, bbox = detector.findPosition(frame)
         totalFingers = detector.fingerCount(frame)
         
-        # Add measurement
-        frame, width, height = measurement.measure_object(frame)
+        #frame, width, height = measurement.measure_object(frame)
 
         # Display info
         ctime = time.time()

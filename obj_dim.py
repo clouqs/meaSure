@@ -6,7 +6,7 @@ import math
 
 # obj_dim.py
 class HandScaleMeasurement:
-    def __init__(self, detector, ref_length_cm=15.0):  # Add detector parameter
+    def __init__(self, detector, ref_length_cm=18.0):  # Add detector parameter
         self.detector = detector  # Use the passed detector
         self.ref_length_cm = ref_length_cm
         self.ref_length_px = None
@@ -15,7 +15,6 @@ class HandScaleMeasurement:
         """Calculate pixel length from middle finger tip (12) to wrist (0)"""
         h, w = frame_shape[:2]
         
-        # Middle finger tip to wrist
         x1, y1 = left_hand_landmarks.landmark[12].x * w, left_hand_landmarks.landmark[12].y * h
         x2, y2 = left_hand_landmarks.landmark[0].x * w, left_hand_landmarks.landmark[0].y * h
         
@@ -50,20 +49,17 @@ class HandScaleMeasurement:
         xmin, xmax = min(x_coords), max(x_coords)
         ymin, ymax = min(y_coords), max(y_coords)
 
-        # Calculate dimensions
         width_px = xmax - xmin
         height_px = ymax - ymin
         width_cm = width_px * cm_per_pixel
-        height_cm = height_px * cm_per_pixel   # Compensation factor
+        height_cm = height_px * cm_per_pixel   
 
-        # Draw on original frame (unflipped coordinates)
         cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
         
         left_tip = (int(left_hand.landmark[12].x * w), int(left_hand.landmark[12].y * h))
         left_wrist = (int(left_hand.landmark[0].x * w), int(left_hand.landmark[0].y * h))
         cv2.line(frame, left_tip, left_wrist, (0, 0, 255), 2)
         
-        # Add text to original frame (will be flipped later)
         cv2.putText(frame, f'{width_cm:.1f}x{height_cm:.1f} cm', 
                 (xmin, ymin-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
         cv2.putText(frame, f'Reference: {self.ref_length_cm}cm', 
