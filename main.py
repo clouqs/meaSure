@@ -89,9 +89,9 @@ class HandTrackingDynamic:
 
         return fingers
 
-    def fingerCount(self, frame):
+    def fingerCount(self):
         fingers = self.findFingerUp()
-        totalFingers = sum([sum(hand) for hand in fingers])  # Sum fingers per hand, then sum totals
+        totalFingers = sum([sum(hand) for hand in fingers])
         return min(totalFingers, 10)  # Cap at 10 fingers
 
     def findDistance(self, p1, p2, frame, draw=True, r=15, t=3):
