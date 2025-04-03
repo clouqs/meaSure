@@ -54,7 +54,7 @@ class HandScaleMeasurement:
         width_px = xmax - xmin
         height_px = ymax - ymin
         width_cm = width_px * cm_per_pixel
-        height_cm = height_px * cm_per_pixel + 0.7  # Compensation factor
+        height_cm = height_px * cm_per_pixel   # Compensation factor
 
         # Draw on original frame (unflipped coordinates)
         cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
