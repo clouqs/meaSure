@@ -27,6 +27,9 @@ def main():
             print("Failed to capture image")
             break
 
+        # Flip the frame to create a mirror image
+        frame = cv2.flip(frame, 1)
+
         frame = detector.findFingers(frame)
         lmsList, bbox = detector.findPosition(frame)
         totalFingers = detector.fingerCount(frame)
@@ -34,23 +37,22 @@ def main():
         # Add measurement
         frame, width, height = measurement.measure_object(frame)
 
-        flipped = cv2.flip(frame, 1)
-
         # Display info
         ctime = time.time()
         fps = 1 / (ctime - ptime)
         ptime = ctime
         
-        cv2.putText(flipped, f'FPS: {int(fps)}', (10, 40),
-                   cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 2)
-        cv2.putText(flipped, f'Fingers: {totalFingers}', (10, 20), 
+        cv2.putText(frame, f'FPS: {int(fps)}', (5, 40),
+                    cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 2)
+        cv2.putText(frame, f'Fingers: {totalFingers}', (5, 20), 
                     cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 2)      
-        cv2.putText(flipped, f'Q = Quit', (10, 80), 
+        cv2.putText(frame, f'Q = Quit', (5, 60), 
                     cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 2)
 
-        cv2.imshow('Hand Tracking',flipped)
+        cv2.imshow('Hand Tracking', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
 
     cap.release()
     cv2.destroyAllWindows()

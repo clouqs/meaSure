@@ -104,9 +104,9 @@ class HandTrackingDynamic:
         cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
 
         if draw:
-            cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 255), t)
-            cv2.circle(frame, (x1, y1), r, (255, 0, 255), cv2.FILLED)
-            cv2.circle(frame, (x2, y2), r, (255, 0, 0), cv2.FILLED)
+            cv2.line(frame, (x1, y1), (x2, y2), (0, 0, 255), t)
+            cv2.circle(frame, (x1, y1), r, (0, 0, 255), cv2.FILLED)
+            cv2.circle(frame, (x2, y2), r, (0, 0, 0), cv2.FILLED)
             cv2.circle(frame, (cx, cy), r, (0, 255, 0), cv2.FILLED)
         
         distance = math.hypot(x2 - x1, y2 - y1)
