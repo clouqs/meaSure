@@ -1,10 +1,132 @@
 import cv2
-import os 
 import mediapipe as mp
+import time
+import math
 
-self.handsMP = mp.solutions.hands #Mp.solution.hands module performs the hand recognition algorithm. So, we create the object and store it in mpHands.
-self.hands = self.handsMP.Hands() # Using mpHands.Hands method we configured the model. The first argument is max_num_hands, that means the maximum number of hands will be detected by the model in a single frame. MediaPipe can detect multiple hands in a single frame, but we’ll detect only one hand at a time in this project.
-self.mpDraw = mp.solutions.drawing_utils #Mp.solutions.drawing_utils will draw the detected key points for us so that we don’t have to draw them manually.
+class HandTrackingDynamic:
+    def __init__(self, mode=False, maxHands=2, detectionCon=0.5, trackCon=0.5):
+        self.mode = mode
+        self.maxHands = maxHands
+        self.detectionCon = detectionCon
+        self.trackCon = trackCon
 
+        self.handsMp = mp.solutions.hands
+        self.hands = self.handsMp.Hands(static_image_mode=self.mode, 
+                                        max_num_hands=self.maxHands, 
+                                        min_detection_confidence=self.detectionCon, 
+                                        min_tracking_confidence=self.trackCon)
+        self.mpDraw = mp.solutions.drawing_utils
+        self.tipIds = [4, 8, 12, 16, 20]
+        self.results = None  # Aggiunto per evitare errori
 
+    def findFingers(self, frame, draw=True):
+        imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        self.results = self.hands.process(imgRGB)  
+        
+        if self.results.multi_hand_landmarks: 
+            for handLms in self.results.multi_hand_landmarks:
+                if draw:
+                    self.mpDraw.draw_landmarks(frame, handLms, self.handsMp.HAND_CONNECTIONS)
 
+        return frame
+
+    def findPosition(self, frame, handNo=0, draw=True):
+        xList, yList = [], []
+        bbox = []
+        self.lmsList = []
+        
+        if self.results and self.results.multi_hand_landmarks:
+            if handNo < len(self.results.multi_hand_landmarks):
+                myHand = self.results.multi_hand_landmarks[handNo]
+                for id, lm in enumerate(myHand.landmark):
+                    h, w, c = frame.shape
+                    cx, cy = int(lm.x * w), int(lm.y * h)
+                    xList.append(cx)
+                    yList.append(cy)
+                    self.lmsList.append([id, cx, cy])
+                    if draw:
+                        cv2.circle(frame, (cx, cy), 5, (255, 0, 255), cv2.FILLED)
+
+                xmin, xmax = min(xList), max(xList)
+                ymin, ymax = min(yList), max(yList)
+                bbox = xmin, ymin, xmax, ymax
+
+                if draw:
+                    cv2.rectangle(frame, (xmin - 20, ymin - 20), (xmax + 20, ymax + 20), (0, 255, 0), 2)
+
+        return self.lmsList, bbox
+    
+    def findFingerUp(self):
+        fingers = []
+
+        if not self.lmsList:  
+            return fingers
+
+        if self.lmsList[self.tipIds[0]][1] > self.lmsList[self.tipIds[0] - 1][1]:
+            fingers.append(1)
+        else:
+            fingers.append(0)
+
+        #other fingers check
+        for id in range(1, 10):            
+            if self.lmsList[self.tipIds[id]][2] < self.lmsList[self.tipIds[id] - 2][2]:
+                fingers.append(1)
+            else:
+                fingers.append(0)
+        
+        return fingers
+
+    def findDistance(self, p1, p2, frame, draw=True, r=15, t=3):
+        if not self.lmsList:  # Evita errori se la lista è vuota
+            return None, frame, []
+
+        x1, y1 = self.lmsList[p1][1:]
+        x2, y2 = self.lmsList[p2][1:]
+        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+
+        if draw:
+            cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 255), t)
+            cv2.circle(frame, (x1, y1), r, (255, 0, 255), cv2.FILLED)
+            cv2.circle(frame, (x2, y2), r, (255, 0, 0), cv2.FILLED)
+            cv2.circle(frame, (cx, cy), r, (0, 255, 0), cv2.FILLED)
+        
+        distance = math.hypot(x2 - x1, y2 - y1)
+        return distance, frame, [x1, y1, x2, y2, cx, cy]
+    def fingerCount(self):
+        
+
+def main():
+    ptime = time.time()
+    cap = cv2.VideoCapture(0)
+    detector = HandTrackingDynamic()
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    if not cap.isOpened():
+        print("Cannot open camera")
+        return
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Failed to capture image")
+            break
+
+        frame = detector.findFingers(frame)
+        lmsList, _ = detector.findPosition(frame)
+
+        if len(lmsList) != 0:
+            ctime = time.time()
+            fps = 1 / (ctime - ptime)
+            ptime = ctime
+            cv2.putText(frame, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+
+        cv2.imshow('Hand Tracking', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # Premi 'q' per uscire
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
