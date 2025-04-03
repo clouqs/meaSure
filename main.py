@@ -33,90 +33,66 @@ class HandTrackingDynamic:
     def findPosition(self, frame, draw=True):
         xList, yList = [], []
         bbox = []
-        self.lmsList = []
+        self.lmsList = []  # Clear the list for new frame
+        self.handTypes = []  # Store hand types separately
 
         if self.results and self.results.multi_hand_landmarks:
-            for handNo, handLms in enumerate(self.results.multi_hand_landmarks):
-                xList.clear()
-                yList.clear()
+            for handNo, (handLms, handedness) in enumerate(zip(self.results.multi_hand_landmarks, 
+                                                            self.results.multi_handedness)):
+                handType = handedness.classification[0].label.lower()
+                self.handTypes.append(handType)
+                
+                singleHandLms = []
                 for id, lm in enumerate(handLms.landmark):
                     h, w, c = frame.shape
                     cx, cy = int(lm.x * w), int(lm.y * h)
-                    xList.append(cx)
-                    yList.append(cy)
-                    self.lmsList.append([id, cx, cy, self.handType])
-
-                    # Draw circle at each landmark point
+                    singleHandLms.append([id, cx, cy, handType])
+                    
                     if draw:
                         cv2.circle(frame, (cx, cy), 4, (0, 0, 255), cv2.FILLED)
+                
+                self.lmsList.append(singleHandLms)  # Keep landmarks separated by hand
 
-                # Draw lines between landmarks within the same finger
                 if draw:
-                    # Connect the finger landmarks (e.g., thumb -> index -> middle -> ring -> pinky)
-                    for finger in [[0, 1, 2, 3, 4],  # Thumb
-                                [5, 6, 7, 8],     # Index
-                                [9, 10, 11, 12],  # Middle
-                                [13, 14, 15, 16], # Ring
-                                [17, 18, 19, 20]]: # Pinky
-                        for i in range(1, len(finger)):  # Start from the second landmark in each finger
-                            cv2.line(frame, (xList[finger[i-1]], yList[finger[i-1]]),
-                                    (xList[finger[i]], yList[finger[i]]), (26, 232, 204), 2)   #BGR format
-
-                    # Draw lines between palm landmarks (e.g., between base of fingers and wrist)
-                    palm_base = [5, 9, 13, 17]  # Base of each finger
-                    wrist = 0  # Wrist landmark (this is typically landmark 0, but can vary)
-                    for i in range(1, len(palm_base)):
-                        cv2.line(frame, (xList[palm_base[i-1]], yList[palm_base[i-1]]),
-                                (xList[palm_base[i]], yList[palm_base[i]]), (26, 232, 204), 2)  #yellow lines
-
-                    # Connect wrist to base of all fingers
-
-                    #if draw:
-                        #for i in range(5):
-                            #cv2.line(frame, (xList[wrist], yList[wrist]), 
-                                    #(xList[palm_base[i]], yList[palm_base[i]]), (255, 255, 0), 2)
-
-                # Draw bounding box around the hand
-
-                #xmin, xmax = min(xList), max(xList)
-                #ymin, ymax = min(yList), max(yList)
-                #bbox = xmin, ymin, xmax, ymax
-                #if draw:
-                    #cv2.rectangle(frame, (xmin - 20, ymin - 20), (xmax + 20, ymax + 20), (0, 255, 0), 2)
+                    # Draw connections for each finger
+                    connections = self.handsMp.HAND_CONNECTIONS
+                    for connection in connections:
+                        start_idx = connection[0]
+                        end_idx = connection[1]
+                        cv2.line(frame, 
+                                (singleHandLms[start_idx][1], singleHandLms[start_idx][2]),
+                                (singleHandLms[end_idx][1], singleHandLms[end_idx][2]),
+                                (26, 232, 204), 2)
 
         return self.lmsList, bbox
-
-
-
-
+    
     def findFingerUp(self):
         fingers = []
+        if not self.results or not self.results.multi_hand_landmarks:
+            return fingers
+        for hand_idx, handLms in enumerate(self.results.multi_hand_landmarks):
+            handType = self.handTypes[hand_idx]
+            handLms = self.lmsList[hand_idx]
+            handFingers = []
 
-        if len(self.lmsList) == 0:
-            return fingers  # Return an empty list if no landmarks are detected
-
-        # Loop through all the hands
-        for handNo, handLms in enumerate(self.results.multi_hand_landmarks):
-            # Determine if it's a left or right hand based on thumb and pinky positions
-            handType = "right" if handLms.landmark[self.tipIds[0]].x < handLms.landmark[self.tipIds[4]].x else "left"
-
-            # Thumb (different check for right/left hand)
-            if (handType == "right" and self.lmsList[self.tipIds[0]][1] > self.lmsList[self.tipIds[0] - 1][1]) or \
-            (handType == "left" and self.lmsList[self.tipIds[0]][1] < self.lmsList[self.tipIds[0] - 1][1]):
-                fingers.append(1)
+            # Thumb (check x position for left/right hand)
+            if handType == "right":
+                handFingers.append(1 if handLms[self.tipIds[0]][1] < handLms[self.tipIds[0]-1][1] else 0)
             else:
-                fingers.append(0)
+                handFingers.append(1 if handLms[self.tipIds[0]][1] > handLms[self.tipIds[0]-1][1] else 0)
 
-            # Other fingers (same for both hands)
+            # Other fingers (check y position)
             for id in range(1, 5):
-                if self.lmsList[self.tipIds[id]][2] < self.lmsList[self.tipIds[id] - 2][2]:
-                    fingers.append(1)
-                else:
-                    fingers.append(0)
+                handFingers.append(1 if handLms[self.tipIds[id]][2] < handLms[self.tipIds[id]-2][2] else 0)
+
+            fingers.append(handFingers)  # Keep fingers separated by hand
 
         return fingers
 
-
+    def fingerCount(self, frame):
+        fingers = self.findFingerUp()
+        totalFingers = sum([sum(hand) for hand in fingers])  # Sum fingers per hand, then sum totals
+        return min(totalFingers, 10)  # Cap at 10 fingers
 
     def findDistance(self, p1, p2, frame, draw=True, r=15, t=3):
         if len(self.lmsList) == 0:
@@ -134,23 +110,13 @@ class HandTrackingDynamic:
         
         distance = math.hypot(x2 - x1, y2 - y1)
         return distance, frame, [x1, y1, x2, y2, cx, cy]
-    
-    def fingerCount(self, frame):
-        fingers = self.findFingerUp()
-        totalFingers = sum(fingers)
-        if totalFingers == 6:     #weird error handling
-            totalFingers = 5      #weird that it counts 6 fingers
-        elif totalFingers == 0:   #will fix later (messo una pezza)
-            totalFingers = 0
-        else:
-            totalFingers = totalFingers + 1
-        return totalFingers   #count fingers - needs better logic
+
 def main():
     ptime = time.time()
     cap = cv2.VideoCapture(0)
     detector = HandTrackingDynamic()
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
     if not cap.isOpened():
         print("Cannot open camera")
@@ -173,10 +139,10 @@ def main():
         ctime = time.time()
         fps = 1 / (ctime - ptime)
         ptime = ctime
-        cv2.putText(flipped,f'FPS: {int(fps)}', (10, 50), 
+        cv2.putText(flipped,f'FPS: {int(fps)}', (10, 40),
                    cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 2)
 
-        cv2.putText(flipped, f'Fingers: {totalFingers}', (10, 30), 
+        cv2.putText(flipped, f'Fingers: {totalFingers}', (10, 20), 
                     cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 2)
 
         cv2.imshow('Hand Tracking', flipped)

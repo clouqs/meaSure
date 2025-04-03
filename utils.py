@@ -39,35 +39,7 @@ class HandTrackingDynamic:
                     
         return frame
 
-    def findPosition(self, frame, handNo=0, draw=True):
-        xList, yList = [], []
-        bbox = []
-        self.lmsList = []
-        
-        if self.results and self.results.multi_hand_landmarks:
-            if handNo < len(self.results.multi_hand_landmarks):
-                myHand = self.results.multi_hand_landmarks[handNo]
-                handedness = self.results.multi_handedness[handNo]
-                self.handType = handedness.classification[0].label.lower()
 
-                for id, lm in enumerate(myHand.landmark):
-                    h, w, c = frame.shape
-                    cx, cy = int(lm.x * w), int(lm.y * h)
-                    xList.append(cx)
-                    yList.append(cy)
-                    self.lmsList.append([id, cx, cy, self.handType])  # Store hand type with landmarks
-                    if draw:
-                        cv2.circle(frame, (cx, cy), 5, (255, 0, 255), cv2.FILLED)
-
-                xmin, xmax = min(xList), max(xList)
-                ymin, ymax = min(yList), max(yList)
-                bbox = xmin, ymin, xmax, ymax
-
-                if draw:
-                    cv2.rectangle(frame, (xmin - 20, ymin - 20), 
-                                (xmax + 20, ymax + 20), (0, 255, 0), 2)
-
-        return self.lmsList, bbox
 
     def findFingerUp(self):
         fingers = []
