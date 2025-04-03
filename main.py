@@ -70,7 +70,7 @@ class HandTrackingDynamic:
                                 (xList[palm_base[i]], yList[palm_base[i]]), (26, 232, 204), 2)  #yellow lines
 
                     # Connect wrist to base of all fingers
-                    
+
                     #if draw:
                         #for i in range(5):
                             #cv2.line(frame, (xList[wrist], yList[wrist]), 
@@ -173,7 +173,7 @@ def main():
         ctime = time.time()
         fps = 1 / (ctime - ptime)
         ptime = ctime
-        cv2.putText(flipped,f'FPS: {int(fps)}', (10, 70), 
+        cv2.putText(flipped,f'FPS: {int(fps)}', (10, 50), 
                    cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 2)
 
         cv2.putText(flipped, f'Fingers: {totalFingers}', (10, 30), 
