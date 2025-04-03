@@ -115,8 +115,8 @@ def main():
     ptime = time.time()
     cap = cv2.VideoCapture(0)
     detector = HandTrackingDynamic()
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 
     if not cap.isOpened():
         print("Cannot open camera")
