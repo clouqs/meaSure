@@ -30,7 +30,7 @@ class HandTrackingDynamic:
 
         return frame
 
-    def findPosition(self, frame, handNo=0, draw=True):
+    def findPosition(self, frame, handNo=1, draw=True):
         xList, yList = [], []
         bbox = []
         self.lmsList = []
@@ -92,8 +92,8 @@ class HandTrackingDynamic:
         
         distance = math.hypot(x2 - x1, y2 - y1)
         return distance, frame, [x1, y1, x2, y2, cx, cy]
-    def fingerCount(self):
-        
+   # def fingerCount(self): add this function to count fingers and draw number top left
+
 
 def main():
     ptime = time.time()
@@ -113,7 +113,8 @@ def main():
             break
 
         frame = detector.findFingers(frame)
-        lmsList, _ = detector.findPosition(frame)
+        flipped = cv2.flip(frame, 1)
+        flipped = detector.findFingers(flipped)
 
         if len(lmsList) != 0:
             ctime = time.time()
@@ -121,7 +122,7 @@ def main():
             ptime = ctime
             cv2.putText(frame, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
 
-        cv2.imshow('Hand Tracking', frame)
+        cv2.imshow('Hand Tracking', flipped)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Premi 'q' per uscire
             break
 
