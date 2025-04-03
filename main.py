@@ -89,7 +89,7 @@ class HandTrackingDynamic:
 
         return fingers
 
-    def fingerCount(self):
+    def fingerCount(self,frame):
         fingers = self.findFingerUp()
         totalFingers = sum([sum(hand) for hand in fingers])
         return min(totalFingers, 10)  # Cap at 10 fingers
@@ -144,6 +144,8 @@ def main():
 
         cv2.putText(flipped, f'Fingers: {totalFingers}', (10, 20), 
                     cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 2)
+        cv2.putText(flipped, f'Q = Quit', (10, 60), 
+                    cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 2)
 
         cv2.imshow('Hand Tracking', flipped)
         if cv2.waitKey(1) & 0xFF == ord('q'):
