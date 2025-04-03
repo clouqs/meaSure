@@ -17,7 +17,8 @@ class HandTrackingDynamic:
                                         min_tracking_confidence=self.trackCon)
         self.mpDraw = mp.solutions.drawing_utils
         self.tipIds = [4, 8, 12, 16, 20]
-        self.results = None  # Aggiunto per evitare errori
+        self.results = None
+        self.lmsList = []  # Added initialization
 
     def findFingers(self, frame, draw=True):
         imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -30,7 +31,7 @@ class HandTrackingDynamic:
 
         return frame
 
-    def findPosition(self, frame, handNo=1, draw=True):
+    def findPosition(self, frame, handNo=0, draw=True):
         xList, yList = [], []
         bbox = []
         self.lmsList = []
@@ -58,17 +59,18 @@ class HandTrackingDynamic:
     
     def findFingerUp(self):
         fingers = []
-
-        if not self.lmsList:  
+        
+        if len(self.lmsList) == 0:
             return fingers
 
+        # Thumb (different check for right/left hand)
         if self.lmsList[self.tipIds[0]][1] > self.lmsList[self.tipIds[0] - 1][1]:
             fingers.append(1)
         else:
             fingers.append(0)
 
-        #other fingers check
-        for id in range(1, 10):            
+        # Other fingers
+        for id in range(1, 5):            
             if self.lmsList[self.tipIds[id]][2] < self.lmsList[self.tipIds[id] - 2][2]:
                 fingers.append(1)
             else:
@@ -77,7 +79,7 @@ class HandTrackingDynamic:
         return fingers
 
     def findDistance(self, p1, p2, frame, draw=True, r=15, t=3):
-        if not self.lmsList:  # Evita errori se la lista è vuota
+        if len(self.lmsList) == 0:
             return None, frame, []
 
         x1, y1 = self.lmsList[p1][1:]
@@ -92,7 +94,13 @@ class HandTrackingDynamic:
         
         distance = math.hypot(x2 - x1, y2 - y1)
         return distance, frame, [x1, y1, x2, y2, cx, cy]
-   # def fingerCount(self): add this function to count fingers and draw number top left
+    
+    def fingerCount(self, frame):
+        fingers = self.findFingerUp()
+        totalFingers = sum(fingers)
+        cv2.putText(frame, f'Fingers: {totalFingers}', (10, 30), 
+                    cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
+        return totalFingers
 
 
 def main():
@@ -113,17 +121,21 @@ def main():
             break
 
         frame = detector.findFingers(frame)
+        lmsList, bbox = detector.findPosition(frame)  # Added this line to populate lmsList
         flipped = cv2.flip(frame, 1)
-        flipped = detector.findFingers(flipped)
-
-        if len(lmsList) != 0:
-            ctime = time.time()
-            fps = 1 / (ctime - ptime)
-            ptime = ctime
-            cv2.putText(frame, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+        
+        # Calculate and display FPS
+        ctime = time.time()
+        fps = 1 / (ctime - ptime)
+        ptime = ctime
+        cv2.putText(flipped, f'FPS: {int(fps)}', (10, 70), 
+                   cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 255), 2)
+        
+        # Count and display fingers
+        detector.fingerCount(flipped)
 
         cv2.imshow('Hand Tracking', flipped)
-        if cv2.waitKey(1) & 0xFF == ord('q'):  # Premi 'q' per uscire
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
