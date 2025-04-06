@@ -1,2 +1,3 @@
 *l'altezza viene presa dal landmark più in alto, fixare
 *add left hand fully open check
+*add button selector for which finger to take measurements

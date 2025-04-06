@@ -43,8 +43,8 @@ class HandScaleMeasurement:
 
         cm_per_pixel = self.ref_length_cm / self.ref_length_px
 
-        # Get right hand bounding box
-        right_landmarks = [(int(lm.x * w), int(lm.y * h)) for lm in right_hand.landmark]
+        fingertip_ids = [0, 4, 8, 12, 16, 20]
+        right_landmarks = [(int(right_hand.landmark[i].x * w), int(right_hand.landmark[i].y * h)) for i in fingertip_ids]
         x_coords, y_coords = zip(*right_landmarks)
         xmin, xmax = min(x_coords), max(x_coords)
         ymin, ymax = min(y_coords), max(y_coords)
