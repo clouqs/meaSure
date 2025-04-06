@@ -14,8 +14,8 @@ def main():
     detector = HandTrackingDynamic()
     measurement = HandScaleMeasurement(detector, ref_length_cm=18.0)  # Pass the detector
     
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     if not cap.isOpened():
         print("Cannot open camera")
