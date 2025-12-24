@@ -1,28 +1,4 @@
 import cv2
-<<<<<<< HEAD
-import mediapipe as mp # type: ignore
-import time
-import math
-
-
-# obj_dim.py
-class HandScaleMeasurement:
-    def __init__(self, detector, ref_length_cm=18.0):  # Add detector parameter
-        self.detector = detector  # Use the passed detector
-        self.ref_length_cm = ref_length_cm
-        self.ref_length_px = None
-
-    def get_reference_scale(self, left_hand_landmarks, frame_shape):
-        """Calculate pixel length from middle finger tip (12) to wrist (0)"""
-        h, w = frame_shape[:2]
-        
-        x1, y1 = left_hand_landmarks.landmark[12].x * w, left_hand_landmarks.landmark[12].y * h
-        x2, y2 = left_hand_landmarks.landmark[0].x * w, left_hand_landmarks.landmark[0].y * h
-        
-        self.ref_length_px = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
-        return self.ref_length_px
-
-=======
 import mediapipe as mp
 import numpy as np
 from collections import deque
@@ -147,19 +123,11 @@ class HandScaleMeasurement:
         
         return std_dev < 0.5  # Less than 0.5cm variation
     
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
     def measure_object(self, frame):
         if not hasattr(self.detector, 'results') or not self.detector.results.multi_hand_landmarks:
             return frame, 0, 0
 
         h, w = frame.shape[:2]
-<<<<<<< HEAD
-        hands = self.detector.results.multi_hand_landmarks       
-        if len(hands) != 2:
-            return frame, 0, 0
-
-        # Identify hands (left is hand with smaller x-coordinate at wrist)
-=======
         hands = self.detector.results.multi_hand_landmarks
         
         if len(hands) != 2:
@@ -168,15 +136,11 @@ class HandScaleMeasurement:
             return frame, 0, 0
 
         # Identify hands by wrist position
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
         if hands[0].landmark[0].x < hands[1].landmark[0].x:
             left_hand, right_hand = hands[0], hands[1]
         else:
             left_hand, right_hand = hands[1], hands[0]
 
-<<<<<<< HEAD
-        # Get reference scale
-=======
         # Calibration phase
         if not self.calibrated:
             is_calibrated = self.calibrate_reference(left_hand, (h, w))
@@ -197,39 +161,12 @@ class HandScaleMeasurement:
             return frame, 0, 0
 
         # Get reference scale with smoothing
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
         self.get_reference_scale(left_hand, (h, w))
         if not self.ref_length_px:
             return frame, 0, 0
 
         cm_per_pixel = self.ref_length_cm / self.ref_length_px
 
-<<<<<<< HEAD
-        fingertip_ids = [0, 4, 8, 12, 16, 20]
-        right_landmarks = [(int(right_hand.landmark[i].x * w), int(right_hand.landmark[i].y * h)) for i in fingertip_ids]
-        x_coords, y_coords = zip(*right_landmarks)
-        xmin, xmax = min(x_coords), max(x_coords)
-        ymin, ymax = min(y_coords), max(y_coords)
-
-        width_px = xmax - xmin
-        height_px = ymax - ymin
-        width_cm = width_px * cm_per_pixel
-        height_cm = height_px * cm_per_pixel   
-
-        cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
-        
-        left_tip = (int(left_hand.landmark[12].x * w), int(left_hand.landmark[12].y * h))
-        left_wrist = (int(left_hand.landmark[0].x * w), int(left_hand.landmark[0].y * h))
-        cv2.line(frame, left_tip, left_wrist, (0, 0, 255), 2)
-        
-        cv2.putText(frame, f'{width_cm:.1f}x{height_cm:.1f} cm', 
-                (xmin, ymin-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
-        cv2.putText(frame, f'Reference: {self.ref_length_cm}cm', 
-                (left_wrist[0]-50, left_wrist[1]+30), 
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-        
-        return frame, width_cm, height_cm
-=======
         # Different measurement modes
         if self.measurement_mode == 'bbox':
             # Bounding box mode (original)
@@ -330,4 +267,3 @@ class HandScaleMeasurement:
         self.calibration_samples = []
         self.measurement_buffer.clear()
         self.scale_buffer.clear()
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)

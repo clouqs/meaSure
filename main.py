@@ -1,27 +1,14 @@
 import cv2
 import time
-<<<<<<< HEAD
-import math
-import mediapipe as mp # type: ignore
-from hand_track import *
-from obj_dim import *
-
-
-=======
 from hand_track import HandTrackingDynamic
 from obj_dim import HandScaleMeasurement
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
 
 
 def main():
     ptime = time.time()
     cap = cv2.VideoCapture(0)
     detector = HandTrackingDynamic()
-<<<<<<< HEAD
-    measurement = HandScaleMeasurement(detector, ref_length_cm=18.0)  # Pass the detector
-=======
     measurement = HandScaleMeasurement(detector, ref_length_cm=18.0)
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
     
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -30,23 +17,6 @@ def main():
         print("Cannot open camera")
         return
 
-<<<<<<< HEAD
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to capture image")
-            break
-        
-
-        #frame flip
-        frame = cv2.flip(frame, 1)
-
-        frame = detector.findFingers(frame)
-        lmsList, bbox = detector.findPosition(frame)
-        totalFingers = detector.fingerCount(frame)
-        
-        frame, width, height = measurement.measure_object(frame)
-=======
     # Settings
     show_landmarks = True
     freeze_frame = False
@@ -92,26 +62,12 @@ def main():
             # Add freeze indicator
             cv2.putText(frame, 'FROZEN', (frame.shape[1]//2 - 50, 40),
                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 3)
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
 
         # Display info
         ctime = time.time()
         fps = 1 / (ctime - ptime)
         ptime = ctime
         
-<<<<<<< HEAD
-        cv2.putText(frame, f'FPS: {int(fps)}', (5, 40),
-                    cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 2)
-        cv2.putText(frame, f'Fingers: {totalFingers}', (5, 20), 
-                    cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 2)      
-        cv2.putText(frame, f'Q = Quit', (5, 60), 
-                    cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 2)
-
-        cv2.imshow('Hand Tracking', frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-=======
         # Info panel with background
         info_height = 120
         overlay = frame.copy()
@@ -156,7 +112,7 @@ def main():
             filename = f"measurement_{timestamp}.jpg"
             cv2.imwrite(filename, frame)
             print(f"Screenshot saved: {filename}")
-        elif key == ord('h'):
+        elif key == ord('h'):   
             print("\n=== Controls ===")
             print("  Q - Quit")
             print("  M - Toggle measurement mode")
@@ -166,14 +122,10 @@ def main():
             print("  S - Save screenshot")
             print("  H - Show this help")
             print("================\n")
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
 
     cap.release()
     cv2.destroyAllWindows()
 
-<<<<<<< HEAD
-=======
 
->>>>>>> cde5c0a (Enhanced hand measurement system with calibration and multiple modes)
 if __name__ == "__main__":
     main()
